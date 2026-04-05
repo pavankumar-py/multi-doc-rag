@@ -2,7 +2,8 @@ streamlit
 langchain
 langchain-groq
 langchain-text-splitters
-chromadb==0.4.24
+chromadb==0.5.0
 PyMuPDF
 sentence-transformers
 python-dotenv
+numpy==1.26.4
