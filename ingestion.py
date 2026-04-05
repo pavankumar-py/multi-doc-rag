@@ -1,4 +1,4 @@
-import fitz
+import fitz #PyMuPDF
 import chromadb
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from dotenv import load_dotenv
