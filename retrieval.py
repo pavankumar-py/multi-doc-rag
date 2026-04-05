@@ -1,23 +1,19 @@
-def retrieve_with_sources(query, collection, embedding_fn, k=5):
-    query_embedding = embedding_fn([query])
+import numpy as np
 
-    results = collection.query(
-        query_embeddings=query_embedding,
-        n_results=k,
-        include=["documents", "metadatas", "distances"]
-    )
+
+def retrieve_with_sources(query, index, model, texts, metadatas, k=5):
+    query_embedding = model.encode([query])
+    query_embedding = np.array(query_embedding).astype("float32")
+
+    distances, indices = index.search(query_embedding, k)
 
     chunks = []
-    for doc, meta, dist in zip(
-        results["documents"][0],
-        results["metadatas"][0],
-        results["distances"][0]
-    ):
+    for dist, idx in zip(distances[0], indices[0]):
         chunks.append({
-            "text": doc,
-            "source": meta["source"],
-            "page": meta["page"],
-            "score": round(1 - dist, 3)
+            "text": texts[idx],
+            "source": metadatas[idx]["source"],
+            "page": metadatas[idx]["page"],
+            "score": round(1 / (1 + dist), 3)
         })
 
     return chunks
