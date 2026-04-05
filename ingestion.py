@@ -1,5 +1,4 @@
-import fitz #PyMuPDF
-import chromadb
+import fitz
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from dotenv import load_dotenv
 
@@ -40,31 +39,18 @@ def extract_chunks(uploaded_files):
 
 
 def build_vectorstore(chunks):
-    from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+    from sentence_transformers import SentenceTransformer
+    import faiss
+    import numpy as np
 
-    embedding_fn = SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
-
-    client = chromadb.Client()
-
-    try:
-        client.delete_collection("multi_doc_rag")
-    except:
-        pass
-
-    collection = client.create_collection(
-        name="multi_doc_rag",
-        embedding_function=embedding_fn
-    )
-
+    model = SentenceTransformer("all-MiniLM-L6-v2")
     texts = [c["text"] for c in chunks]
     metadatas = [c["metadata"] for c in chunks]
-    ids = [f"chunk_{i}" for i in range(len(chunks))]
 
-    collection.add(
-        documents=texts,
-        metadatas=metadatas,
-        ids=ids
-    )
+    embeddings = model.encode(texts, show_progress_bar=False)
+    embeddings = np.array(embeddings).astype("float32")
 
-    print(f"Stored {len(chunks)} chunks in ChromaDB")
-    return collection, embedding_fn 
+    index = faiss.IndexFlatL2(embeddings.shape[1])
+    index.add(embeddings)
+
+    return index, model, texts, metadatas
